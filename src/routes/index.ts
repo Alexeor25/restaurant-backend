@@ -3,12 +3,12 @@ import { createReservation } from '../controlers/principal/v1/reservation';
 import { 
   getMenu, createProduct, updateProduct, deleteProduct,
   getCategories, createCategory, updateCategory, deleteCategory
-} from '../controlers/admin/menu';
+} from '../controlers/admin/CRUD/menu';
 import {
   getReservations, getReservationById, updateReservation, deleteReservation
-} from '../controlers/admin/reservation';
+} from '../controlers/admin/CRUD/reservation';
 import {getMenuP} from '../controlers/principal/v1/menu'
-
+import { refreshToken } from '../controlers/admin/auth/refreshToken';
 const router = Router();
 
 // ==================== PRINCIPAL ====================
@@ -39,4 +39,6 @@ router.get('/api/admin/v1/reservations/:id', getReservationById);
 router.put('/api/admin/v1/reservations/:id', updateReservation);
 router.delete('/api/admin/v1/reservations/:id', deleteReservation);
 
+//api auth
+router.post('/api/refresh', refreshToken );
 export default router;

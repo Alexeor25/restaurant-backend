@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import { db } from '../../config/db';
+
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
+import { db } from '../../config/db';
 const findUserByEmail = async (email: string)=>{
     try {
       const query = 'SELECT * FROM admins WHERE email = $1';
@@ -20,13 +21,6 @@ const findUserByEmail = async (email: string)=>{
   
 
 export const createToken = async (req: Request,res: Response )=>{
-const {email,password} = req.body;
-
- if (!email || !password) {
-      return res.status(400).json({ 
-        error: 'Email y contraseña son requeridos' 
-      });
-    }
 
 const user = await findUserByEmail(email);
     if (user == null) {
@@ -42,21 +36,20 @@ const isValidPassword = await bcrypt.compare(password, user.password);
       });
     }
 
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email,
-      },
-      process.env.JWT_SECRET || "clave super secreta",
-      { expiresIn: '120min' }
-    );
+   const accessToken = jwt.sign({ userId: user.id }, PRIVATE_KEY, { 
+    algorithm: 'RS256', 
+    expiresIn: '1h' 
+  });
 
-        res.cookie('token',token,{
-          httpOnly: true,
-          secure: false,
-          maxAge: 3600000,
-          sameSite:'strict'
-        });
-       
-        res.json({isAdmin: true})
+  const refreshToken = jwt.sign({ userId: user.id }, REFRESH_SECRET, { 
+    expiresIn: '7d' 
+  });
+
+ res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', 
+    path: '/api/refresh' 
+  });
+    res.json({ accessToken });
 }

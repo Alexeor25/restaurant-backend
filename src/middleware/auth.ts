@@ -1,8 +1,8 @@
 import jwt from 'jwt'
-
-const authenticateToken = (req, res, next) => {
+import { Request, Response} from 'express'
+const authenticateToken = (req:Request, res:Response, next:any) => {
    
- const token = req.cookie.token;
+ const token = req.cookies.token;
  if (!token) {
       return next();
     }
