@@ -18,7 +18,10 @@ export interface category {
 // Controlador para obtener el menú
 export const getMenuP = async (req: Request, res: Response): Promise<void> => {
   try {
-    const query = 'SELECT id, category_id, nombre, precio FROM products ORDER BY nombre';
+    // `precio::float8` convierte el DECIMAL de PostgreSQL a número,
+    // si no, pg lo devuelve como string ("17.00" en vez de 17).
+    const query =
+      'SELECT id, category_id, nombre, precio::float8 AS precio FROM products ORDER BY nombre';
     const result = await db.query(query);
     
     const menu: products[] = result.rows;

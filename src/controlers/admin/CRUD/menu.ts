@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { db } from '../../config/db';
+import { db } from '../../../config/db';
 
 // ==================== PRODUCTOS (MENÚ) ====================
 
@@ -7,7 +7,7 @@ import { db } from '../../config/db';
 export const getMenu = async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await db.query(
-      'SELECT id, category_id, nombre, precio FROM products ORDER BY nombre'
+      'SELECT id, category_id, nombre, precio::float8 AS precio FROM products ORDER BY nombre'
     );
     res.status(200).json(result.rows);
   } catch (error) {

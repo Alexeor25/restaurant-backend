@@ -1,27 +1,33 @@
 import { Request, Response } from 'express';
-import { db } from '../../config/db';
+import { db } from '../../../config/db';
 
 // Obtener todas las reservaciones
-export const getReservations = async (req: Request, res: Response): Promise<void> => {
+export const getReservations = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const result = await db.query(
-      'SELECT * FROM reservations ORDER BY fecha DESC'
+      'SELECT * FROM reservations ORDER BY date DESC'
     );
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error('Error al obtener las reservaciones:', error);
     res.status(500).json({ message: 'Error al obtener las reservaciones' });
   }
 };
 
 // Obtener una reservación por ID
-export const getReservationById = async (req: Request, res: Response): Promise<void> => {
+export const getReservationById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
-    
-    const result = await db.query(
-      'SELECT * FROM reservations WHERE id = $1',
-      [id]
-    );
+
+    const result = await db.query('SELECT * FROM reservations WHERE id = $1', [
+      id,
+    ]);
 
     if (result.rows.length === 0) {
       res.status(404).json({ message: 'Reservación no encontrada' });
@@ -30,45 +36,26 @@ export const getReservationById = async (req: Request, res: Response): Promise<v
 
     res.status(200).json(result.rows[0]);
   } catch (error) {
+    console.error('Error al obtener la reservación:', error);
     res.status(500).json({ message: 'Error al obtener la reservación' });
   }
 };
 
-// Crear una reservación
-export const createReservation = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { name, email, phone, fecha, personas, peticion } = req.body;
-
-    if (!name || !email || !phone || !fecha || !personas) {
-      res.status(400).json({ message: 'Todos los campos son requeridos excepto petición' });
-      return;
-    }
-
-    const result = await db.query(
-      `INSERT INTO reservations (name, email, phone, fecha, personas, peticion) 
-       VALUES ($1, $2, $3, $4, $5, $6) 
-       RETURNING *`,
-      [name, email, phone, fecha, personas, peticion || '']
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al crear la reservación' });
-  }
-};
-
 // Actualizar una reservación
-export const updateReservation = async (req: Request, res: Response): Promise<void> => {
+export const updateReservation = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, email, phone, fecha, personas, peticion } = req.body;
+    const { name, email, phone, date, persons, special } = req.body;
 
     const result = await db.query(
-      `UPDATE reservations 
-       SET name = $1, email = $2, phone = $3, fecha = $4, personas = $5, peticion = $6 
-       WHERE id = $7 
+      `UPDATE reservations
+       SET name = $1, email = $2, phone = $3, date = $4, persons = $5, special = $6
+       WHERE id = $7
        RETURNING *`,
-      [name, email, phone, fecha, personas, peticion, id]
+      [name, email, phone, date, persons, special, id]
     );
 
     if (result.rows.length === 0) {
@@ -78,12 +65,16 @@ export const updateReservation = async (req: Request, res: Response): Promise<vo
 
     res.status(200).json(result.rows[0]);
   } catch (error) {
+    console.error('Error al actualizar la reservación:', error);
     res.status(500).json({ message: 'Error al actualizar la reservación' });
   }
 };
 
 // Eliminar una reservación
-export const deleteReservation = async (req: Request, res: Response): Promise<void> => {
+export const deleteReservation = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -99,6 +90,7 @@ export const deleteReservation = async (req: Request, res: Response): Promise<vo
 
     res.status(200).json({ message: 'Reservación eliminada' });
   } catch (error) {
+    console.error('Error al eliminar la reservación:', error);
     res.status(500).json({ message: 'Error al eliminar la reservación' });
   }
 };
