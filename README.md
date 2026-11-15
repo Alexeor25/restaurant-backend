@@ -1,12 +1,50 @@
-# Backend del restaurante
+# Backend del Restaurante Ortuzar
 
 API REST con Node.js, Express, TypeScript y PostgreSQL para gestionar el menú,
 las categorías y las reservaciones de un restaurante.
 
-## Requisitos
+## Stack tecnológico
 
-- Node.js 20+
-- PostgreSQL 14+
+| Capa | Tecnología |
+|---|---|
+| Runtime | Node.js 20+ |
+| Lenguaje | TypeScript 5 (compila a `dist/` con `tsc`) |
+| Framework HTTP | Express 5 |
+| Base de datos | PostgreSQL 14+ con driver `pg` (Pool de conexiones) |
+| Autenticación | JWT (`jsonwebtoken`) + `bcrypt` |
+| Cookies | `cookie-parser` (refresh token `httpOnly`) |
+| CORS | `cors` con credenciales habilitadas |
+| Configuración | `dotenv` |
+| Desarrollo | `ts-node` |
+
+## Estructura del proyecto
+
+```
+restaurant-backend/
+├── src/
+│   ├── server.ts             # Arranque del servidor (PORT, cierre elegante)
+│   ├── app.ts                # App Express: CORS, JSON, cookies, rutas, errores
+│   ├── config/
+│   │   └── db.ts             # Pool de PostgreSQL (variables de entorno)
+│   ├── middleware/
+│   │   └── auth.ts           # authenticateToken (JWT en header Bearer)
+│   ├── routes/
+│   │   └── index.ts          # Definición de todas las rutas
+│   └── controlers/
+│       ├── principal/v1/     # Lógica del sitio público
+│       │   ├── menu.ts       # GET menú (y getCategories, sin uso actual)
+│       │   └── reservation.ts# POST crear reservación
+│       └── admin/
+│           ├── auth/
+│           │   ├── createToken.ts    # Login + emisión de tokens + cookie
+│           │   └── refreshToken.ts   # Renovación del access token
+│           └── CRUD/
+│               ├── menu.ts           # CRUD productos y categorías
+│               └── reservation.ts    # CRUD reservaciones
+├── database_setup.sql        # Creación de tablas y datos de ejemplo
+├── tsconfig.json
+└── .env.example              # Plantilla de variables de entorno
+```
 
 ## Puesta en marcha
 
@@ -49,13 +87,22 @@ El script de base de datos crea un administrador:
 | `REFRESH_SECRET` | Secreto del refresh token | — |
 | `CLIENT_URL` | Origen permitido por CORS | `http://localhost:5173` |
 
+## Modelo de datos
+
+| Tabla | Campos principales | Observaciones |
+|---|---|---|
+| `category` | `id`, `nombre` (único), `orden` | Categorías del menú |
+| `products` | `id`, `category_id` (FK → `category`), `nombre`, `precio`, `disponible` | Carta del restaurante |
+| `reservations` | `id`, `name`, `email`, `phone`, `date`, `persons`, `special`, `status` | `status`: `pending` / `confirmed` / `cancelled` |
+| `admins` | `id`, `email` (único), `password` (bcrypt) | Usuarios del panel admin |
+
 ## Endpoints
 
 ### Públicos
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/api/principal/v1/menu` | Menú completo |
+| GET | `/api/principal/v1/menu` | Menú completo (incluye el nombre de la categoría) |
 | POST | `/api/principal/v1/reservation` | Crear una reservación |
 | POST | `/api/admin/v1/login` | Login de administrador |
 | POST | `/api/admin/v1/logout` | Logout |
@@ -85,10 +132,19 @@ El script de base de datos crea un administrador:
 3. Cuando el access token expira (1h), llamar a `POST /api/refresh` para obtener uno nuevo
    (usa una cookie httpOnly que se setea sola en el login).
 
+## Seguridad implementada
+
+- Contraseñas hasheadas con bcrypt.
+- Access token de corta duración (1 h) en memoria; refresh token (7 d) en cookie `httpOnly`.
+- El login devuelve el mismo mensaje para "usuario inexistente" y "clave incorrecta".
+- Consultas SQL parametrizadas (sin inyección SQL).
+- Validación de datos de entrada (p. ej. `persons` debe ser un entero mayor a 0).
+- Cabecera `Cache-Control: no-store` en todas las respuestas.
+
 ## Scripts
 
 | Script | Descripción |
 |---|---|
-| `npm run dev` | Servidor en modo desarrollo |
+| `npm run dev` | Servidor en modo desarrollo (`ts-node src/server.ts`) |
 | `npm run build` | Compila TypeScript a `dist/` |
-| `npm start` | Ejecuta el build compilado |
+| `npm start` | Ejecuta el build compilado (`node dist/server.js`) |

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../../../config/db';
 
-// Obtener todas las reservaciones
+
 export const getReservations = async (
   req: Request,
   res: Response
@@ -17,7 +17,7 @@ export const getReservations = async (
   }
 };
 
-// Obtener una reservación por ID
+
 export const getReservationById = async (
   req: Request,
   res: Response
@@ -41,21 +41,30 @@ export const getReservationById = async (
   }
 };
 
-// Actualizar una reservación
+
 export const updateReservation = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, email, phone, date, persons, special } = req.body;
+    const { name, email, phone, date, persons, special, status } = req.body;
 
+    // Actualización parcial: si un campo no viene (null), se conserva el valor actual.
+    //VERIFICAR*********************
+    // Así el frontend puede mandar solo { status } para confirmar/cancelar.
     const result = await db.query(
       `UPDATE reservations
-       SET name = $1, email = $2, phone = $3, date = $4, persons = $5, special = $6
-       WHERE id = $7
+       SET name = COALESCE($1, name),
+           email = COALESCE($2, email),
+           phone = COALESCE($3, phone),
+           date = COALESCE($4, date),
+           persons = COALESCE($5, persons),
+           special = COALESCE($6, special),
+           status = COALESCE($7, status)
+       WHERE id = $8
        RETURNING *`,
-      [name, email, phone, date, persons, special, id]
+      [name ?? null, email ?? null, phone ?? null, date ?? null, persons ?? null, special ?? null, status ?? null, id]
     );
 
     if (result.rows.length === 0) {

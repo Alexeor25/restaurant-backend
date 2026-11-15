@@ -10,8 +10,12 @@ import jwt from 'jsonwebtoken';
 export const refreshToken = (req: Request, res: Response) => {
   const token = req.cookies?.refreshToken;
 
+  // Sin cookie de refresh el visitante simplemente NO tiene sesión de admin
+  // (es lo normal en el sitio público). Respondemos 200 con accessToken: null
+  // en vez de 401 para que el navegador no registre un error en consola
+  // en cada carga de la página.
   if (!token) {
-    return res.sendStatus(401);
+    return res.json({ accessToken: null });
   }
 
   try {
@@ -26,8 +30,8 @@ export const refreshToken = (req: Request, res: Response) => {
       { expiresIn: '1h' }
     );
 
-    res.json({ accessToken: newAccessToken });
+    return res.json({ accessToken: newAccessToken });
   } catch {
-    res.sendStatus(403);
+    return res.sendStatus(403);
   }
 };

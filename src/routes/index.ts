@@ -23,25 +23,21 @@ import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
-// ==================== PÚBLICO ====================
-// El menú y las reservaciones del cliente no necesitan token.
+
 router.get('/api/principal/v1/menu', getMenuP);
 router.post('/api/principal/v1/reservation', createReservation);
 
-// ==================== AUTH (público) ====================
-// El login es público: es justamente la ruta que permite obtener el token.
-// No lleva middleware de auth.
+
 router.post('/api/admin/v1/login', createToken);
 router.post('/api/admin/v1/logout', logout);
 router.post('/api/refresh', refreshToken);
 
-// A partir de acá, TODO /api/admin/v1 exige token.
-// El orden importa: las rutas de login/logout quedaron definidas antes.
+
+
 router.use('/api/admin/v1', authenticateToken);
 
-// ==================== ADMIN ====================
+// ADMIN 
 
-// Menú / productos
 router.get('/api/admin/v1/menu', getMenu);
 router.post('/api/admin/v1/menu', createProduct);
 router.put('/api/admin/v1/menu/:id', updateProduct);

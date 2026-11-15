@@ -1,10 +1,6 @@
 import type { Request, Response } from 'express';
 import { db } from '../../../config/db';
 
-/**
- * POST /api/principal/v1/reservation
- * Ruta pública: crea una reservación desde la web del restaurante.
- */
 export const createReservation = async (req: Request, res: Response) => {
   try {
     const { name, email, phone, date, persons, special } = req.body;
@@ -15,11 +11,20 @@ export const createReservation = async (req: Request, res: Response) => {
       });
     }
 
+    // El frontend envía `persons` como string y la columna es INTEGER:
+    // validamos aquí para devolver un 400 claro en vez de un 500 de PostgreSQL.
+    const personsNumber = Number(persons);
+    if (!Number.isInteger(personsNumber) || personsNumber <= 0) {
+      return res.status(400).json({
+        error: 'El número de comensales debe ser un entero mayor a 0',
+      });
+    }
+
     const result = await db.query(
       `INSERT INTO reservations (name, email, phone, date, persons, special)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [name, email, phone, date, persons, special]
+      [name, email, phone, date, personsNumber, special]
     );
 
     res.status(201).json({

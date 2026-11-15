@@ -2,7 +2,7 @@
 -- Uso: psql -U postgres -d ortuzar -f database_setup.sql
 
 -- Tabla de categorías
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE IF NOT EXISTS category (
     id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
     orden INTEGER NOT NULL DEFAULT 0,
@@ -12,13 +12,13 @@ CREATE TABLE IF NOT EXISTS categories (
 
 -- Tabla de productos (menú)
 CREATE TABLE IF NOT EXISTS products (
-    id VARCHAR(50) PRIMARY KEY,
-    category_id VARCHAR(100) NOT NULL,
+    id SERIAL PRIMARY KEY,
+    category_id INTEGER NOT NULL REFERENCES category(id) ON DELETE CASCADE,
     nombre VARCHAR(200) NOT NULL,
-    precio DECIMAL(10, 2) NOT NULL,
+    precio INTEGER NOT NULL,
+    disponible BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(nombre) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabla de administradores (necesaria para el login)
@@ -38,21 +38,25 @@ CREATE TABLE IF NOT EXISTS reservations (
     date TIMESTAMP NOT NULL,
     persons INTEGER NOT NULL,
     special TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Insertar categorías de ejemplo
-INSERT INTO categories (nombre, orden) VALUES
+INSERT INTO category (nombre, orden) VALUES
 ('bebida', 1),
 ('plato', 2)
 ON CONFLICT (nombre) DO NOTHING;
 
 -- Insertar productos de ejemplo
 INSERT INTO products (id, category_id, nombre, precio) VALUES
-('1561', 'bebida', 'tukola', 17.00),
-('1562', 'bebida', 'tukola', 147.00),
-('1563', 'plato', 'pollito', 15.00)
+(1561, 1, 'tukola', 8),
+(1562, 1, 'tukola', 4),
+(1563, 2, 'pollito', 6)
 ON CONFLICT (id) DO NOTHING;
+
+-- Ajustar el sequence de products (porque insertamos ids manuales)
+SELECT setval(pg_get_serial_sequence('products', 'id'), (SELECT MAX(id) FROM products));
 
 -- Insertar admin de ejemplo
 --   email:    admin@example.com
