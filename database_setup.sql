@@ -10,6 +10,11 @@ CREATE TABLE IF NOT EXISTS category (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Nombre de categoría único sin distinguir mayúsculas/minúsculas.
+-- El backend responde 409 si se intenta repetir; esto lo garantiza también
+-- a nivel de base de datos (incluso con dos peticiones simultáneas).
+CREATE UNIQUE INDEX IF NOT EXISTS category_nombre_unique ON category (lower(nombre));
+
 -- Tabla de productos (menú)
 CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,

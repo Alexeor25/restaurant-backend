@@ -19,8 +19,7 @@ export const getMenuP = async (req: Request, res: Response): Promise<void> => {
   try {
     // `precio::float8` convierte el DECIMAL de PostgreSQL a número,
     // si no, pg lo devuelve como string ("17.00" en vez de 17).
-    // El JOIN con `category` nos da el NOMBRE de la categoría para que el
-    // frontend pueda agrupar los productos sin tener que cruzar ids.
+    
     const query =
       `SELECT p.id, p.category_id, p.nombre, p.precio::float8 AS precio, c.nombre AS categoria
        FROM products p

@@ -1,10 +1,10 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
+import { ZodError } from 'zod';
 import router from './routes/index';
 
 const app = express();
-
 
 app.use(
   cors({
@@ -32,15 +32,33 @@ app.use((_req, res) => {
 
 app.use(
   (
-    error: Error,
+    error: unknown,
     _req: express.Request,
     res: express.Response,
     _next: express.NextFunction
   ) => {
-    const err = error as Error & { status?: number; statusCode?: number; type?: string };
+    // 1) Datos inválidos según Zod: 400 con el detalle de cada campo.
+    //    `error` incluye un resumen legible porque el frontend muestra ese
+    //    texto directamente (por ejemplo, el formulario de reservas).
+    if (error instanceof ZodError) {
+      const details = error.issues.map((issue) => ({
+        field: issue.path.join('.') || 'body',
+        message: issue.message,
+      }));
+      const first = details[0]?.message ?? 'Revisa los datos enviados';
+      return res.status(400).json({
+        error: `Datos inválidos: ${first}`,
+        details,
+      });
+    }
 
-    // Errores provocados por la petición del cliente (JSON mal formado, cuerpo
-    // demasiado grande…): respondemos 4xx, no un 500 de "error interno".
+    // 2) Errores provocados por la petición del cliente (JSON mal formado,
+    //    cuerpo demasiado grande…): respondemos 4xx, no un 500 interno.
+    const err = error as Error & {
+      status?: number;
+      statusCode?: number;
+      type?: string;
+    };
     const status = err.statusCode ?? err.status;
     if (status && status >= 400 && status < 500) {
       const message =

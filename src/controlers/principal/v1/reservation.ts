@@ -1,30 +1,26 @@
 import type { Request, Response } from 'express';
 import { db } from '../../../config/db';
+import type { CreateReservationInput } from '../../../schemas/reservation';
 
-export const createReservation = async (req: Request, res: Response) => {
+/**
+ * POST /api/principal/v1/reservation
+ *
+ * Los datos ya llegan validados y normalizados por `createReservationSchema`
+ * (middleware `validate`): nombre recortado, email en minúsculas o null,
+ * comensales como número entero y fecha en formato AAAA-MM-DD.
+ */
+export const createReservation = async (
+  req: Request<Record<string, string>, unknown, CreateReservationInput>,
+  res: Response
+) => {
   try {
     const { name, email, phone, date, persons, special } = req.body;
-
-    if (!name || !phone || !date || !persons) {
-      return res.status(400).json({
-        error: 'Faltan campos requeridos: name, phone, date, persons',
-      });
-    }
-
-    // El frontend envía `persons` como string y la columna es INTEGER:
-    // validamos aquí para devolver un 400 claro en vez de un 500 de PostgreSQL.
-    const personsNumber = Number(persons);
-    if (!Number.isInteger(personsNumber) || personsNumber <= 0) {
-      return res.status(400).json({
-        error: 'El número de comensales debe ser un entero mayor a 0',
-      });
-    }
 
     const result = await db.query(
       `INSERT INTO reservations (name, email, phone, date, persons, special)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [name, email, phone, date, personsNumber, special]
+      [name, email, phone, date, persons, special]
     );
 
     res.status(201).json({

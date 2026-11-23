@@ -6,15 +6,6 @@ export interface AuthRequest extends Request {
   user?: { id: number; email: string };
 }
 
-/**
- * Middleware que EXIGE un token válido.
- *
- * Importante: este middleware se aplica SOLO a las rutas que necesitan
- * protección (las de admin). La ruta de login NO lo usa, justamente
- * porque es la que permite obtener el token la primera vez.
- *
- * El token se manda así: Authorization: Bearer <token>
- */
 export const authenticateToken = (
   req: AuthRequest,
   res: Response,
